@@ -35,7 +35,6 @@ for i in range(0, 43200):
     #convert to lumens
     lumens = sensorFunctions.convertToLumens(phototransValue)
     print "Lumens: ", lumens
-    print ""
 
     #################
     #VALUES FOR FAN CONTROL
@@ -45,14 +44,12 @@ for i in range(0, 43200):
     temp_C = sensorFunctions.convertToC(thermistorValue)
     temp_F = sensorFunctions.convertToF(thermistorValue)
     print"Temperature in C: ", temp_C, " Temperature in F: ", temp_F
-    print ""
 
     #################
     #VALUES FOR PUMP CONTROL
     #print "Reading Tensiometer..."
     humidity = sensorFunctions.readTensiometer(tensiometerPIN)
     print "RAW Tensiometer Reading: ", humidity
-    print ""
 
 
     ################
@@ -61,7 +58,7 @@ for i in range(0, 43200):
     #is greater than 700, turn on light relay
     if (lumens < 700):
         print "##################"
-        print "ERROR"
+        print "ERROR 1"
         print "NOT ENOUGH LIGHT, TURNING ON LIGHTS"
         print "##################"
         GPIO.output(lightRELAY, True)
@@ -69,26 +66,40 @@ for i in range(0, 43200):
         GPIO.output(lightRELAY, False)
 
     #temperature above roughly 75F (NEEDS TUNING), turn on fan
-    if (temp_F > 80):
+    if (temp_F > 75):
         print "##################"
-        print "ERROR"
+        print "ERROR 2"
         print "TEMPERATURE HOTTER THAN 75F, TURNING ON FAN"
         print "##################"
         GPIO.output(fanRELAY, True)
-    elif (temp_F < 79):
+    elif (temp_F < 72):
         GPIO.output(fanRELAY, False)
 
     #check analog values, at roughly 170 equals full conductivity/highest humidity
     if (humidity < 50):
         print "#################"
-        print "ERROR"
+        print "ERROR 3"
         print "SOIL IS DRY, ACTIVATING WATER PUMP"
         print "#################"
         GPIO.output(pumpRELAY, True)
     elif (humidity > 50):
         GPIO.output(pumpRELAY, False)
 
-    #delay for timekeeping
+    #time keeping variables
+    timeElapsedHour = i/3600
+    timeElapsedMin = i/60
+    timeElapsedSec = i
+
+    #formatting for time
+    if (timeElapsedSec>=60):
+        timeElapsedSec= timeElapsedSec - (timeElapsedMin*60)
+    if (timeElapsedMin>=60):
+        timeElapsedMin= timeElapsedMin - (timeElapsedHour*60)
+        
+    #delay for timekeeping, line breaks for formatting on terminal
+    print "Time Elapsed : ", timeElapsedHour, ":", timeElapsedMin,":", timeElapsedSec
+    print ""
+    print ""
     time.sleep(1.0)
         
 
