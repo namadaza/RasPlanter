@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sensorFunctions
+import Phototransistor, Thermistor, Tensiometer
 import RPi.GPIO as GPIO
 import time
 
@@ -34,16 +34,16 @@ for i in range(0, 43200):
     phototransValue = sensorFunctions.readPhototransistor(phototransPIN)
     #convert to lumens
     lumens = sensorFunctions.convertToLumens(phototransValue)
-    print "Lumens: ", lumens
+    print "Lumens: ", lumens, " ANALOG VALUE: ", phototransValue
 
     #################
     #VALUES FOR FAN CONTROL
     #print "Reading Thermistor..."
-    thermistorValue = sensorFunctions.readThermistor(thermistorPIN)
+    thermistorValue = thermistorFunctions.readThermistor(thermistorPIN)
     #convert to fahrenheit and celsius
-    temp_C = sensorFunctions.convertToC(thermistorValue)
-    temp_F = sensorFunctions.convertToF(thermistorValue)
-    print"Temperature in C: ", temp_C, " Temperature in F: ", temp_F
+    temp_C = thermistorFunctions.convertToC(thermistorValue)
+    temp_F = thermistorFunctions.convertToF(thermistorValue)
+    print"Temperature in C: ", temp_C, " Temperature in F: ", temp_F, " ANALOG VALUE: ", thermistorValue
 
     #################
     #VALUES FOR PUMP CONTROL
