@@ -9,27 +9,30 @@ import RPi.GPIO as GPIO
 
 class Relay():
     def __init__(self, relayPIN):
-        self.relayPin = relayPin
+        self.relayPIN = relayPIN
         #pin numbering system (relative to revision number)
         GPIO.setmode(GPIO.BCM)
 
         #instantiate relay @ the relay pin
-        GPIO.setup(self.relayPin, GPIO.OUT)
+        GPIO.setup(self.relayPIN, GPIO.OUT)
         
     #turn relay on and off depending on an input value
     def regulateThreshold(self, thresholdValue, inputValue):
         self.thresholdValue = thresholdValue
         self.inputValue = inputValue
-        if (inputValue<ThresholdValue):
-            GPIO.output(True)
-        elif (inputValue>ThresholdValue):
-            GPIO.output(False)
+        if (inputValue<thresholdValue):
+            GPIO.output(self.relayPIN, True)
+            return 1
+        elif (inputValue>thresholdValue):
+            GPIO.output(self.relayPIN, False)
+            return 0
         else:
-            GPIO.output(False)
+            GPIO.output(self.relayPIN, False)
+            return 0
 
     def setModeOff(self):
-        GPIO.output(False)
+        GPIO.output(self.relayPIN, False)
 
     def setModeOn(self):
-        GPIO.output(True)
+        GPIO.output(self.relayPIN, True)
 

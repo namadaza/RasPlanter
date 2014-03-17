@@ -21,9 +21,9 @@ class Tensiometer():
         
     #outputs 0-1023 (2^10, 10 bits) analog value from thermistor
     def getHumidity(self):
-    humidity=mcp3008.readadc(self.tensiometerPin, constants.SPICLK, constants.SPIMOSI,
+        humidity=mcp3008.readadc(self.tensiometerPin, constants.SPICLK, constants.SPIMOSI,
                                         constants.SPIMISO, constants.SPICS)
-    
+        
         return humidity
             
 

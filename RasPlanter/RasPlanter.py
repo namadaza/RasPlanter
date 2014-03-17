@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-import Phototransistor, Thermistor, Tensiometer
+#import Phototransistor, Thermistor, Tensiometer
+from Phototransistor import Phototransistor
+from Thermistor import Thermistor
+from Tensiometer import Tensiometer
+from Relay import Relay
+
 import RPi.GPIO as GPIO
 import time
 
@@ -11,28 +16,45 @@ phototransPIN = 0;
 thermistorPIN = 2;
 tensiometerPIN = 4;
 
-lightRELAY = 17
-fanRELAY = 21#either 21, or 27; revision 1/2 respectivley 
-pumpRELAY = 22
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(lightRELAY, GPIO.OUT)
-GPIO.setup(fanRELAY, GPIO.OUT)
-GPIO.setup(pumpRELAY, GPIO.OUT)
+lightRelayPIN = 17
+fanRelayPIN = 21#either 21, or 27; revision 1/2 respectivley 
+pumpRelayPIN = 22
+#GPIO.setmode(GPIO.BCM)
+#GPIO.setup(lightRELAY, GPIO.OUT)
+#GPIO.setup(fanRELAY, GPIO.OUT)
+#GPIO.setup(pumpRELAY, GPIO.OUT)
 
 #INITIALLY SET TO FALSE
-GPIO.output(lightRELAY, False)
-GPIO.output(fanRELAY, False)
-GPIO.output(pumpRELAY, False)
+#GPIO.output(lightRELAY, False)
+#GPIO.output(fanRELAY, False)
+#GPIO.output(pumpRELAY, False)
 
 rerun_bool = True
 
+#instantiate sensor classes
+phototransistor = Phototransistor(phototransPIN)
+thermistor = Thermistor(thermistorPIN)
+tensiometer = Tensiometer(tensiometerPIN)
+
+#instantiate relay classes
+lightRelay = Relay(lightRelayPIN)
+fanRelay = Relay(fanRelayPIN)
+pumpRelay = Relay(pumpRelayPIN)
+
+
 while True:
+    #set relays to false
+    lightRelay.setModeOff()
+    fanRelay.setModeOff()
+    pumpRelay.setModeOff()
     while (rerun_bool):
         #Ask user how long to run the test in DAYS
         time_of_test = input("Days to run the test (INT): ")
+        print "Running for:", time_of_test, " days"
 
         #Ask user how long each light cycle is
         time_of_lightcycle = input("Length of each light cycle (IN HOURS): ")
+        print "Light cycles set at:", time_of_lightcycle, " hours"
 
         #caclulate time of rest (no lights)
         time_of_rest = (24-time_of_lightcycle)
@@ -48,24 +70,21 @@ while True:
                 #################
                 #VALUES FOR LIGHT CONTROL
                 #print "Reading Phototransistor..."
-                phototransValue = sensorFunctions.readPhototransistor(phototransPIN)
-                #convert to lumens
-                lumens = sensorFunctions.convertToLumens(phototransValue)
-                print "Lumens: ", lumens, " ANALOG VALUE: ", phototransValue
+                lumens = phototransistor.getLumens()
+                print "Lumens: ", lumens, " ANALOG VALUE: ", phototransistor.getAnalog()
 
                 #################
                 #VALUES FOR FAN CONTROL
                 #print "Reading Thermistor..."
-                thermistorValue = thermistorFunctions.readThermistor(thermistorPIN)
                 #convert to fahrenheit and celsius
-                temp_C = thermistorFunctions.convertToC(thermistorValue)
-                temp_F = thermistorFunctions.convertToF(thermistorValue)
-                print"Temperature in C: ", temp_C, " Temperature in F: ", temp_F, " ANALOG VALUE: ", thermistorValue
+                temp_C = thermistor.getTempC()
+                temp_F = thermistor.getTempF()
+                print "Temperature in C: ", temp_C, " Temperature in F: ", temp_F, " ANALOG VALUE: ", thermistor.getAnalog()
 
                 #################
                 #VALUES FOR PUMP CONTROL
                 #print "Reading Tensiometer..."
-                humidity = sensorFunctions.readTensiometer(tensiometerPIN)
+                humidity = tensiometer.getHumidity()
                 print "RAW Tensiometer Reading: ", humidity
 
 
@@ -73,34 +92,29 @@ while True:
                 #RELAY CONTROL
                 ################
                 #is greater than 700, turn on light relay
-                if (lumens < 700):
-                    print "##################"
-                    print "ERROR 1"
-                    print "NOT ENOUGH LIGHT, TURNING ON LIGHTS"
-                    print "##################"
-                    GPIO.output(lightRELAY, True)
-                elif (lumens >700):
-                    GPIO.output(lightRELAY, False)
+                lightRelay.regulateThreshold(700, lumens)
+                #if (lightRelay.regulateThreshold()==0):
+                #    print "##################"
+                #    print "ERROR 1"
+                #    print "NOT ENOUGH LIGHT, TURNING ON LIGHTS"
+                #    print "##################"
+                
 
                 #temperature above roughly 75F (NEEDS TUNING), turn on fan
-                if (temp_F > 75):
-                    print "##################"
-                    print "ERROR 2"
-                    print "TEMPERATURE HOTTER THAN 75F, TURNING ON FAN"
-                    print "##################"
-                    GPIO.output(fanRELAY, True)
-                elif (temp_F < 72):
-                    GPIO.output(fanRELAY, False)
+                fanRelay.regulateThreshold(75, temp_F)
+                #if (fanRelay.regulateThreshold()==0):
+                #    print "##################"
+                #    print "ERROR 2"
+                #    print "TEMPERATURE HOTTER THAN 75F, TURNING ON FAN"
+                #    print "##################"
 
                 #check analog values, at roughly 170 equals full conductivity/highest humidity
-                if (humidity < 50):
-                    print "#################"
-                    print "ERROR 3"
-                    print "SOIL IS DRY, ACTIVATING WATER PUMP"
-                    print "#################"
-                    GPIO.output(pumpRELAY, True)
-                elif (humidity > 50):
-                    GPIO.output(pumpRELAY, False)
+                pumpRelay.regulateThreshold(50, humidity)
+                #if (pumpRelay.regulateThreshold()==0):
+                #    print "#################"
+                #    print "ERROR 3"
+                #    print "SOIL IS DRY, ACTIVATING WATER PUMP"
+                #    print "#################"
 
                 #time keeping variables
                 timeElapsedHour = i/3600
