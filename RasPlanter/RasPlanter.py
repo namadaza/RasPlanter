@@ -10,7 +10,7 @@ import RPi.GPIO as GPIO
 import time
 
 ###########################
-#12 HOUR APPLICATION
+#RASPLANTER
 ###########################
 phototransPIN = 0;
 thermistorPIN = 2;
@@ -64,9 +64,10 @@ while True:
         #half second delay on each relay setting change
         #for watering, roughly estimate time intervals using variable 'i'
         time_of_lightcycle_in_s = time_of_lightcycle*60*60
-        for days in range(1, time_of_test):
+        for days in range(0, time_of_test):
             #simulated daytime (first half of program)
             for i in range(0, time_of_lightcycle_in_s):
+                print "Light Cylce Active"
                 #################
                 #VALUES FOR LIGHT CONTROL
                 #print "Reading Phototransistor..."
@@ -133,7 +134,8 @@ while True:
                 print ""
                 time.sleep(1.0)
             #simulated night time, lights shutoff, humidity and temp still on
-            for i in range(0, time_of_lightcycle_in_s):
+            for l in range(0, time_of_rest_in_s):
+                print "Night Cycle Active"
                 #################
                 #VALUES FOR FAN CONTROL
                 #print "Reading Thermistor..."
@@ -190,14 +192,17 @@ while True:
                 print ""
                 time.sleep(1.0)
                 
-        rerun_test = input("Rerun test? (y/n): ")
-        while (rerun_test!="y" or "n"):
-            print "Could not understand answer, enter only 'y' or 'n'"
-            rerun_test = input("Rerun test? (y/n): ")
-        if (rerun_test=="n"):
+        rerun_test = raw_input("Rerun test? (y/n): ")
+        print "You entered: ", rerun_test.lower()
+        while rerun_test.lower() not in ['y', 'yes', 'ye', 'n', 'nay', 'no']:
+            print "Could not understand answer, please enter 'y' or 'n'"
+            rerun_test = raw_input("Rerun test? (y/n): ")
+        if rerun_test.lower() in ['y', 'yes', 'ye']:
             rerun_bool = True
-        elif (rerun_test=="n"):
+            print "Rerunning test"
+        elif rerun_test.lower() in ['n', 'nay', 'no']:
             rerun_bool = False
+            print "Test complete"
         
         
     
