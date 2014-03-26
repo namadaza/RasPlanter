@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+"""
+A simple echo server
+"""
+
+import socket
+
+class Server:
+	def __init__(self):
+		HOST = 'localhost'
+		PORT = 5555
+		BUFSIZ = 1024
+		backlog = 5
+		ADDR = (HOST, PORT)
+		serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		serversock.bind(ADDR)
+		serversock.listen(backlog)
+	
+	def read_socket(self):
+		clientsock, addr = serversock.accept()
+		data = clientsock.recv(BUFSIZ)
+		if (data):
+			return data
+		else:
+			print "Error, could not establish connection to server"
+	
+	def write_to_socket(self, user_input):
+		clientsock, addr = serversock.accept()
+		data = clientsock.recv(BUFSIZ)
+		if data:
+			clientsock.send(user_input)
+		else:
+			print "Could not send data"

@@ -5,6 +5,7 @@ from Phototransistor import Phototransistor
 from Thermistor import Thermistor
 from Tensiometer import Tensiometer
 from Relay import Relay
+from Server import Server
 
 import RPi.GPIO as GPIO
 import time
@@ -36,6 +37,9 @@ rerun_test = True
 phototransistor = Phototransistor(phototransPIN)
 thermistor = Thermistor(thermistorPIN)
 tensiometer = Tensiometer(tensiometerPIN)
+
+#instantiate server class
+server = Server()
 
 #instantiate relay classes
 lightRelay = Relay(lightRelayPIN)
@@ -177,13 +181,15 @@ def RasPlanter(rerun_bool):
 			fanRelay.setModeOff()
 			pumpRelay.setModeOff()
 			
-def print_message():
-	print "Message 1!"
+def server_read_socket():
+	return server.read_socket()
 
 while True:
 	try:
 		thread.start_new_thread(RasPlanter, (rerun_test, ))
 		thread.start_new_thread(print_message, ( ))
+		
+		#delay sets times inbetween running of threads
 		time.sleep(5)
 	except:
 		print "err"
