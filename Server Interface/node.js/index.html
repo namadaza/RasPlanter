@@ -1,0 +1,40 @@
+<html>
+<head>
+	<title>RasPlanter Variable Setting</title>
+	<style>
+		#vars {
+			height:200px;
+		}
+	</style>
+</head>
+<body>
+	<div id="vars"></div>
+	<form id="setDays">
+		<input size="35" id="days"></input>
+		<input type="submit" value="submit days"></input>
+	</form>
+	
+	<script src="/jQuery.js"></script>
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		jQuery(function($) {
+			var socket = io.connect();
+			var $setDays= $('#setDays');
+			var $days= $('#days');
+			var $vars= $('#vars');
+			
+			$setDays.submit(function(e) {
+				e.preventDefault();
+				socket.emit("set_days", $days);
+				//$days.val("");
+			}
+			
+			socket.on('days set', function(data) {
+				$vars.append("<p>"+data + "</p>");
+				$days.val("DAYS SET");
+			});
+		});
+	</script>
+</body>
+</html>

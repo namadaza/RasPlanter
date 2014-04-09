@@ -8,6 +8,11 @@ import eeml
 
 GPIO.setmode(GPIO.BCM)
 
+GPIO.setup(24, GPIO.OUT)
+GPIO.setup(23, GPIO.IN)
+GPIO.setup(18, GPIO.OUT)
+GPIO.setup(25, GPIO.OUT)
+
 #read SPI data from MPC3008 chip, 8 possible ADC inputs (0-7)
 def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     #reject invalid adc pin numbers
@@ -41,3 +46,7 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
 
     adcout /= 2 #first bit is 'null', drop it
     return adcout
+
+while True:
+    value = readadc(2, 18, 24, 23, 25)
+    print value

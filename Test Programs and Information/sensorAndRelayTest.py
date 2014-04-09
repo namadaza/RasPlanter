@@ -9,6 +9,7 @@ import sensorFunctions
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.OUT)
 GPIO.setup(21, GPIO.OUT)
 GPIO.setup(22, GPIO.IN)
 GPIO.output(21, GPIO.LOW)
@@ -55,18 +56,21 @@ def reading(sensor):
 
 
 while True:
-    print "Reading Phototransistor"
-    phototransValue = sensorFunctions.readPhototransistor(5)
-    print "Phototransistor Read: ", phototransValue
-    lumens = sensorFunctions.convertToLumens(phototransValue)
-    print "Analog Converted to Lumens: ", lumens
-
-    if (lumens < 500):
-        print "TURN OFF RELAY"
-        GPIO.output(17, False)
-        time.sleep(1.0)
-    else:
-        print "TURN ON RELAY"
-        GPIO.output(17, True)
-        time.sleep(1.0)
+    print "PHOTOTRANSISTER ANALOG VALUE: "
+    phototransValue = sensorFunctions.readPhototransistor(0)
+    print phototransValue
+#    print "Reading Phototransistor"
+#    phototransValue = sensorFunctions.readPhototransistor(0)
+#    print "Phototransistor Read: ", phototransValue
+#    lumens = sensorFunctions.convertToLumens(phototransValue)
+#    print "Analog Converted to Lumens: ", lumens
+#
+#    if (lumens < 500):
+#        print "TURN OFF RELAY"
+#        GPIO.output(17, False)
+#        time.sleep(1.0)
+#    else:
+#        print "TURN ON RELAY"
+#        GPIO.output(17, True)
+#        time.sleep(1.0)
 
