@@ -8,7 +8,7 @@ from ServerCommand import ServerCommand
 class Server:
 	def __init__(self):
 		self.HOST = 'localhost'
-		self.PORT = 8080
+		self.PORT = 9876
 		self.BUFSIZ = 1024
 		self.backlog = 5
 		ADDR = (self.HOST, self.PORT)

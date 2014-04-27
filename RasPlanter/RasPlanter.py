@@ -5,11 +5,17 @@ from Phototransistor import Phototransistor
 from Thermistor import Thermistor
 from Tensiometer import Tensiometer
 from Relay import Relay
-from Server import Server
+from ServerCommand import ServerCommand
 
 import RPi.GPIO as GPIO
 import time
 import thread
+
+#imports for websocket handling
+import tornado.httpserver
+import tornado.websocket
+import tornado.ioloop
+import tornado.web
 
 ###########################
 #RASPLANTER
@@ -37,9 +43,6 @@ phototransistor = Phototransistor(phototransPIN)
 thermistor = Thermistor(thermistorPIN)
 tensiometer = Tensiometer(tensiometerPIN)
 
-#instantiate server class
-server = Server()
-
 #instantiate relay classes
 lightRelay = Relay(lightRelayPIN)
 fanRelay = Relay(fanRelayPIN)
@@ -54,6 +57,65 @@ setTemperature = 0
 setHumidity = 0
 isTestFinished = False
 
+#class handles websocket events
+class WSHandler(tornado.websocket.WebSocketHandler):
+
+	def open(self):
+		print 'New connection was opened'
+
+	def on_message(self, data):
+		print 'Incoming data:', data
+		server_command = ServerCommand(data)
+		global setDays
+		global setLightcycle
+		global setLumens
+		global setTemperature
+		global setHumidity
+		global rerun_test
+		
+		print "server command type: ", server_command.command_type
+		print "server command data: ", server_command.command_data
+		
+		#DAYS
+		if (server_command.command_type=="setDays"):
+			setDays = int(server_command.command_data)
+			print "setdays"
+		elif (server_command.command_type=="getDays"):
+			self.write_message(str(setDays))
+			
+		#LIGHTCYCLE
+		elif (server_command.command_type=="setLightcycle"):
+			setLightcycle = int(server_command.command_data)
+			print "lightcycle"
+			
+		#LUMENS
+		elif (server_command.command_type=="setLumens"):
+			setLumens = int(server_command.command_data)
+			print "lumens"
+		
+		#TEMPERATURE
+		elif (server_command.command_type=="setTemperature"):
+			setTemperature = int(server_command.command_data)
+			print "temp"
+		
+		#HUMIDITY
+		elif (server_command.command_type=="setHumidity"):
+			setHumidity = int(server_command.command_data)
+			print "humidity"
+		
+		#START TEST
+		elif (server_command.command_type=="startTest"):
+			rerun_test = int(server_command.command_data)
+			
+		#END TEST
+		#put code
+			
+	def on_close(self):
+		print 'Connection was closed...'
+ 
+application = tornado.web.Application([
+  (r'/ws', WSHandler),
+])
 
 def RasPlanter():
 	#set relays to false
@@ -209,7 +271,7 @@ def RasPlanter():
 			time.sleep(5)
 		#time.sleep(5)
 			
-def server_read_socket():
+'''def server_read_socket():
 	global setDays
 	global setLightcycle
 	global setLumens
@@ -240,6 +302,7 @@ def server_read_socket():
 	else:
 		setTemperature = 999
 	print_command_data()
+'''
 	
 def print_command_data():
 	print "setDays: ", setDays
@@ -250,7 +313,10 @@ def print_command_data():
 try:
 	thread.start_new_thread(RasPlanter, ( ))
 	while (True):
-		server_read_socket()
+		#server_read_socket()
+		http_server = tornado.httpserver.HTTPServer(application)
+		http_server.listen(8080)
+		tornado.ioloop.IOLoop.instance().start()
 	#delay sets times inbetween running of threads
 except:
 	print "err"
