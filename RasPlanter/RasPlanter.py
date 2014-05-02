@@ -81,30 +81,45 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 			setDays = int(server_command.command_data)
 			print "setdays"
 		elif (server_command.command_type=="getDays"):
-			self.write_message(str(setDays))
+			time_of_testSTR = (str(time_of_test))
+			self.write_message(str("returnedDays::"+time_of_testSTR))
 			
 		#LIGHTCYCLE
 		elif (server_command.command_type=="setLightcycle"):
 			setLightcycle = int(server_command.command_data)
 			print "lightcycle"
+		elif (server_command.command_type=="getLightcycle"):
+			time_of_lightcycleSTR = (str(time_of_lightcycle))
+			self.write_message(str("returnedLightcycle::"+time_of_lightcycleSTR))
 			
 		#LUMENS
 		elif (server_command.command_type=="setLumens"):
 			setLumens = int(server_command.command_data)
 			print "lumens"
+		elif (server_command.command_type=="getLumens"):
+			lumensSTR = (str(lumens))
+			self.write_message(str("returnedLumens::"+lumensSTR))
 		
 		#TEMPERATURE
 		elif (server_command.command_type=="setTemperature"):
 			setTemperature = int(server_command.command_data)
 			print "temp"
+		elif (server_command.command_type=="getTemp"):
+			temp_FSTR = (str(temp_F))
+			self.write_message(str("returnedTemp::"+temp_FSTR))
 		
 		#HUMIDITY
 		elif (server_command.command_type=="setHumidity"):
 			setHumidity = int(server_command.command_data)
 			print "humidity"
+		elif (server_command.command_type=="getHumidity"):
+			humiditySTR = (str(humidity))
+			self.write_message(str("returnedHumidity::"+humiditySTR))
 		
-		#START TEST
+		#START/STOP TEST
 		elif (server_command.command_type=="startTest"):
+			rerun_test = int(server_command.command_data)
+		elif (server_command.command_type=="stopTest"):
 			rerun_test = int(server_command.command_data)
 			
 		#END TEST
@@ -118,12 +133,18 @@ application = tornado.web.Application([
 ])
 
 def RasPlanter():
+	#set variables to global, so other functions can have access
+	global time_of_test
+	global time_of_lightcycle
+	global lumens
+	global temp_F
+	global humidity
 	#set relays to false
 	lightRelay.setModeOff()
 	fanRelay.setModeOff()
 	pumpRelay.setModeOff()
 	while (True):
-		print "top of while loop"
+		print "RasPlanter standing by...."
 		time.sleep(1.5)
 		while (rerun_test):
 			print "while loop"
