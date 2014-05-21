@@ -55,7 +55,7 @@ setLightcycle = 0
 setLumens = 0
 setTemperature = 0
 setHumidity = 0
-isTestFinished = False
+isTestFinished = True
 
 #class handles websocket events
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -64,7 +64,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		print 'New connection was opened'
 
 	def on_message(self, data):
-		print 'Incoming data:', data
+		#print 'Incoming data...', data
 		server_command = ServerCommand(data)
 		global setDays
 		global setLightcycle
@@ -72,14 +72,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		global setTemperature
 		global setHumidity
 		global rerun_test
+		global isTestFinished
 		
-		print "server command type: ", server_command.command_type
-		print "server command data: ", server_command.command_data
+		#print "server command type: ", server_command.command_type
+		#print "server command data: ", server_command.command_data
 		
 		#DAYS
 		if (server_command.command_type=="setDays"):
 			setDays = int(server_command.command_data)
-			print "setdays"
+			#print "setdays"
 		elif (server_command.command_type=="getDays"):
 			time_of_testSTR = (str(time_of_test))
 			self.write_message(str("returnedDays::"+time_of_testSTR))
@@ -87,7 +88,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		#LIGHTCYCLE
 		elif (server_command.command_type=="setLightcycle"):
 			setLightcycle = int(server_command.command_data)
-			print "lightcycle"
+			#print "lightcycle"
 		elif (server_command.command_type=="getLightcycle"):
 			time_of_lightcycleSTR = (str(time_of_lightcycle))
 			self.write_message(str("returnedLightcycle::"+time_of_lightcycleSTR))
@@ -95,7 +96,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		#LUMENS
 		elif (server_command.command_type=="setLumens"):
 			setLumens = int(server_command.command_data)
-			print "lumens"
+			#print "lumens"
 		elif (server_command.command_type=="getLumens"):
 			lumensSTR = (str(lumens))
 			self.write_message(str("returnedLumens::"+lumensSTR))
@@ -103,7 +104,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		#TEMPERATURE
 		elif (server_command.command_type=="setTemperature"):
 			setTemperature = int(server_command.command_data)
-			print "temp"
+			#print "temp"
 		elif (server_command.command_type=="getTemp"):
 			temp_FSTR = (str(temp_F))
 			self.write_message(str("returnedTemp::"+temp_FSTR))
@@ -111,16 +112,27 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		#HUMIDITY
 		elif (server_command.command_type=="setHumidity"):
 			setHumidity = int(server_command.command_data)
-			print "humidity"
+			#print "humidity"
 		elif (server_command.command_type=="getHumidity"):
 			humiditySTR = (str(humidity))
 			self.write_message(str("returnedHumidity::"+humiditySTR))
 		
 		#START/STOP TEST
 		elif (server_command.command_type=="startTest"):
-			rerun_test = int(server_command.command_data)
+			rerun_test = 1
 		elif (server_command.command_type=="stopTest"):
-			rerun_test = int(server_command.command_data)
+			rerun_test = 0
+			
+		#IS TEST RUNNING
+		elif (server_command.command_type=="isTestOn"):
+			#print "ISTEST FINISHED:", isTestFinished
+			#print "++++++++++++++++++++++++++++++++++"
+			if (isTestFinished==False):
+				self.write_message(str("testOn::1"))
+				#print "sending back TEST ON"
+			else:
+				self.write_message(str("testOn::0"))
+				#print "sending back TEST OFF"
 			
 		#END TEST
 		#put code
@@ -139,6 +151,8 @@ def RasPlanter():
 	global lumens
 	global temp_F
 	global humidity
+	global isTestFinished
+	
 	#set relays to false
 	lightRelay.setModeOff()
 	fanRelay.setModeOff()
@@ -147,7 +161,6 @@ def RasPlanter():
 		print "RasPlanter standing by...."
 		time.sleep(1.5)
 		while (rerun_test):
-			print "while loop"
 			isTestFinished = False
 			#Ask user how long to run the test in DAYS
 			#time_of_test = input("Days to run the test (INT): ")
@@ -172,15 +185,19 @@ def RasPlanter():
 					break
 				#simulated daytime (first half of program)
 				for i in range(0, time_of_lightcycle_in_s):
+					isTestFinished = False
 					if(not rerun_test):
+						print "rerun_test: ", rerun_test
 						break
+					print "rerun_test: ", rerun_test
 					print "Light Cylce Active"
 					#################
 					#VALUES FOR LIGHT CONTROL
 					#print "Reading Phototransistor..."
 					lumens = phototransistor.getLumens()
 					print "Lumens: ", lumens, " ANALOG VALUE: ", phototransistor.getAnalog()
-		
+					print "Holding at: ", setLumens, " lumens"
+					
 					#################
 					#VALUES FOR FAN CONTROL
 					#print "Reading Thermistor..."
@@ -188,12 +205,14 @@ def RasPlanter():
 					temp_C = thermistor.getTempC()
 					temp_F = thermistor.getTempF()
 					print "Temperature in C: ", temp_C, " Temperature in F: ", temp_F, " ANALOG VALUE: ", thermistor.getAnalog()
-
+					print "Holding at: ", setTemperature, " degrees F"
+					
 					#################
 					#VALUES FOR PUMP CONTROL
 					#print "Reading Tensiometer..."
 					humidity = tensiometer.getHumidity()
 					print "RAW Tensiometer Reading: ", humidity
+					print "Holding at: ", setHumidity, " humidity"
 
 
 					################
@@ -201,9 +220,14 @@ def RasPlanter():
 					################
 					#is greater than 700, turn on light relay
 					lightRelay.regulateThreshold(setLumens, lumens)                        
-
+					if (lumens<setLumens):
+						lightRelay.setModeOn()
+					
 					#temperature above roughly 75F (NEEDS TUNING), turn on fan
-					fanRelay.regulateThreshold(setTemperature, temp_F)
+					if (setTemperature<temp_F):
+						fanRelay.setModeOn()
+					else:
+						fanRelay.setModeOff()
 		
 					#check analog values, at roughly 170 equals full conductivity/highest humidity
 					pumpRelay.regulateThreshold(setHumidity, humidity)
@@ -225,7 +249,9 @@ def RasPlanter():
 					print ""
 					time.sleep(1.0)
 				#simulated night time, lights shutoff, humidity and temp still on
+				lightRelay.setModeOff()
 				for l in range(0, time_of_rest_in_s):
+					isTestFinished = False
 					if(not rerun_test):
 						break
 					print "Night Cycle Active"
@@ -249,7 +275,10 @@ def RasPlanter():
 					#RELAY CONTROL
 					################
 					#temperature above roughly 75F (NEEDS TUNING), turn on fan
-					fanRelay.regulateThreshold(setTemperature, temp_F)
+					if (setTemperature<temp_F):
+						fanRelay.setModeOn()
+					else:
+						fanRelay.setModeOff()
 
 					#check analog values, at roughly 170 equals full conductivity/highest humidity
 					pumpRelay.regulateThreshold(setHumidity, humidity)
@@ -270,73 +299,25 @@ def RasPlanter():
 					print ""
 					print ""
 					time.sleep(1.0)
-			"""
-			rerun_test = raw_input("Rerun test? (y/n): ")
-			print "You entered: ", rerun_test.lower()
-			while rerun_test.lower() not in ['y', 'yes', 'ye', 'n', 'nay', 'no']:
-				print "Could not understand answer, please enter 'y' or 'n'"
-				rerun_test = raw_input("Rerun test? (y/n): ")
-			if rerun_test.lower() in ['y', 'yes', 'ye']:
-				rerun_bool = True
-				print "Rerunning test"
-			elif rerun_test.lower() in ['n', 'nay', 'no']:
-				rerun_bool = False
-				print "Test complete"
-				#set relays to false
-				lightRelay.setModeOff()
-				fanRelay.setModeOff()
-				pumpRelay.setModeOff()
-			"""
+			lightRelay.setModeOff()
+			fanRelay.setModeOff()
+			pumpRelay.setModeOff()
 			print "Test Complete...Please Reset Variables or Shutoff RasPlanter"
 			isTestFinished = True
 			time.sleep(5)
 		#time.sleep(5)
-			
-'''def server_read_socket():
-	global setDays
-	global setLightcycle
-	global setLumens
-	global setTemperature
-	global setHumidity
-	global rerun_test
-	
-	server_command = server.read_socket()
-	print "server command.command_type", server_command.command_type
-	print "server command command data", server_command.command_data
-	if (server_command.command_type=="setDays"):
-		setDays = int(server_command.command_data)
-		print "setdays"
-	elif (server_command.command_type=="setLightcycle"):
-		setLightcycle = int(server_command.command_data)
-		print "lightcycle"
-	elif (server_command.command_type=="setLumens"):
-		setLumens = int(server_command.command_data)
-		print "lumens"
-	elif (server_command.command_type=="setTemperature"):
-		setTemperature = int(server_command.command_data)
-		print "temp"
-	elif (server_command.command_type=="setHumidity"):
-		setHumidity = int(server_command.command_data)
-		print "humidity"
-	elif (server_command.command_type=="startTest"):
-		rerun_test = int(server_command.command_data)
-	else:
-		setTemperature = 999
-	print_command_data()
-'''
-	
-def print_command_data():
-	print "setDays: ", setDays
-	print "setLightcycle: ", setLightcycle
-	print "setTemperature: ", setTemperature
-	print "setHumidity: ", setHumidity
 
 try:
+	print "err?1"
 	thread.start_new_thread(RasPlanter, ( ))
+	print "err @ RasPlanter?"
 	while (True):
 		#server_read_socket()
+		print "err @ starting server?"
 		http_server = tornado.httpserver.HTTPServer(application)
-		http_server.listen(8080)
+		print "err @ listening 8080?"
+		http_server.listen(8000)
+		print "err @ starting loops?"
 		tornado.ioloop.IOLoop.instance().start()
 	#delay sets times inbetween running of threads
 except:
